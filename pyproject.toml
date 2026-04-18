@@ -28,6 +28,13 @@ dependencies = [
     "pymupdf>=1.24",
     "python-dotenv>=1.0",
     "requests>=2.31",
+    # Mozart fork: docling promoted from optional extra to main dependency.
+    # Lets headless users (e.g. `--ocr-backend docling` runs that skip
+    # OpenRouter entirely) work out of the box without `uvx --with docling`.
+    # Adds ~120 packages including torch/transformers — heavy but justified
+    # for the fork's primary use case (subscription-only, no API keys).
+    "docling>=2.86.0",
+    "transformers>=5.4,<6",
 ]
 
 [project.urls]

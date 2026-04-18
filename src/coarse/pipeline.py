@@ -359,6 +359,7 @@ def review_paper(
     language: str | None = None,
     site_language: str | None = None,
     progress_callback: PipelineProgressCallback | None = None,
+    run_qa: bool | None = None,
 ) -> tuple[Review, str, PaperText]:
     """Full pipeline orchestrator.
 
@@ -422,6 +423,10 @@ def review_paper(
     explicit_language = language or config.review_language
     progress = _PipelineProgressReporter(progress_callback)
     client = LLMClient(model=resolved_model, config=config, cost_callback=progress.update_cost)
+    # Mozart fork: capture the caller's run_qa intent (--no-qa flag) before the
+    # local `run_qa` is reused below as the effective QA flag. None = use
+    # config/auto-detect; True/False = explicit caller override.
+    requested_qa = run_qa
     run_qa = False
 
     if skip_cost_gate:
@@ -434,8 +439,10 @@ def review_paper(
     is_pdf = Path(pdf_path).suffix.lower() == ".pdf"
 
     if is_pdf:
-        # Auto-trigger extraction QA if garble detected or explicitly enabled
-        run_qa = config.extraction_qa
+        # Auto-trigger extraction QA if garble detected or explicitly enabled.
+        # Mozart fork: explicit caller run_qa (--no-qa flag) takes precedence
+        # over config.extraction_qa; None falls back to the config default.
+        run_qa = requested_qa if requested_qa is not None else config.extraction_qa
         if not run_qa and paper_text.garble_ratio > 0.001:
             logger.info(
                 "High garble ratio (%.4f) detected — auto-enabling extraction QA",

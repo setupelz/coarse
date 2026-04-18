@@ -244,6 +244,8 @@ def test_main_handoff_supports_markdown_source(tmp_path) -> None:
         "effort": "high",
         "pre_extracted": None,
         "language": None,
+        "run_qa": None,
+        "author_notes": None,
     }
     assert (out_dir / "paper_review_gpt-5.4.md").read_text(encoding="utf-8") == "# Review\n"
 

@@ -150,8 +150,15 @@ def extract_text(pdf_path: str | Path, use_cache: bool = True) -> PaperText:
         if cached is not None:
             return cached
 
-    # Both modes keep Mistral OCR first. The fast path adds a local
-    # pymupdf4llm fallback for the live handoff workflow.
+    # Both modes keep Mistral OCR first by default. The fast path adds a
+    # local pymupdf4llm fallback for the live handoff workflow.
+    #
+    # COARSE_OCR_BACKEND overrides backend *priority* (not exclusivity):
+    # the chosen backend runs first; remaining backends stay as fallbacks.
+    # Values: "auto" (default), "docling", "mistral", "pymupdf".
+    #
+    # Mozart fork patch — supports running with no OpenRouter key by
+    # setting COARSE_OCR_BACKEND=docling, which puts local Docling first.
     if os.environ.get("COARSE_EXTRACTION_FAST") == "1":
         extractors = [
             ("Mistral OCR (OpenRouter, chunked)", _extract_mistral_openrouter),
@@ -164,6 +171,34 @@ def extract_text(pdf_path: str | Path, use_cache: bool = True) -> PaperText:
             ("pdf-text (OpenRouter)", _extract_pdftext_openrouter),
             ("Docling", _extract_docling),
         ]
+
+    backend_override = os.environ.get("COARSE_OCR_BACKEND", "auto").lower()
+    if backend_override not in ("auto", ""):
+        preferred = {
+            "docling": "Docling",
+            "mistral": "Mistral OCR (OpenRouter, chunked)",
+            "pymupdf": "pymupdf4llm",
+        }.get(backend_override)
+        if preferred is None:
+            raise ExtractionError(
+                f"Invalid COARSE_OCR_BACKEND={backend_override!r}. "
+                "Expected one of: auto, docling, mistral, pymupdf."
+            )
+        # Ensure preferred backend exists; inject if missing (e.g.
+        # pymupdf4llm is only in the fast path by default).
+        known = {name: fn for name, fn in extractors}
+        if preferred not in known:
+            injections = {
+                "pymupdf4llm": _extract_pymupdf4llm,
+                "Docling": _extract_docling,
+            }
+            if preferred in injections:
+                known[preferred] = injections[preferred]
+        # Move preferred to the front, keep others as fallbacks.
+        extractors = [(preferred, known[preferred])] + [
+            (n, f) for n, f in extractors if n != preferred
+        ]
+        logger.info("OCR backend override: %s moved to front of cascade", preferred)
 
     full_markdown = None
     errors: list[str] = []

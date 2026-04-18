@@ -296,6 +296,7 @@ def run_headless_review(
     language: str | None = None,
     deep_literature_search: bool = False,
     run_qa: bool | None = None,
+    author_notes: str | None = None,
 ):
     """Run the full coarse pipeline with a headless CLI backend.
 
@@ -332,6 +333,7 @@ def run_headless_review(
         "skip_cost_gate": True,
         "language": language,
         "run_qa": run_qa,
+        "author_notes": author_notes,
     }
     if deep_literature_search:
         review_kwargs["deep_literature_search"] = True

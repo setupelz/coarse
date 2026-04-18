@@ -56,6 +56,11 @@ KNOWN_OVERSIZED: dict[str, int] = {
     # bumped in commit ${COMMIT2_SHA} when the retry-loop + model-
     # fallback + semaphore landed.
     "headless_clients": 1100,
+    # Mozart fork: cli_review grew with --no-qa, --ocr-backend, --notes
+    # flags (plus their wiring through to run_headless_review). Splitting
+    # the argparse setup from the dispatch logic is a clean refactor
+    # candidate but deferred until upstream sync settles.
+    "cli_review": 850,
 }
 
 

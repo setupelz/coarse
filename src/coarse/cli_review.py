@@ -572,6 +572,12 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("/tmp/coarse-review.log"),
         help="Log path used with --detach (default: /tmp/coarse-review.log).",
     )
+    parser.add_argument(
+        "--no-qa",
+        action="store_true",
+        help="Skip post-extraction vision-LLM quality check. Useful when "
+        "running without a GEMINI_API_KEY — mirrors the main `coarse` CLI flag.",
+    )
     args = parser.parse_args(argv)
 
     # --attach is a watch-only mode that does NOT run the pipeline.
@@ -743,6 +749,7 @@ def main(argv: list[str] | None = None) -> int:
                 "effort": effort,
                 "pre_extracted": pre_extracted_path,
                 "language": args.language,
+                "run_qa": False if args.no_qa else None,
             }
             if args.deep_literature_search:
                 headless_kwargs["deep_literature_search"] = True

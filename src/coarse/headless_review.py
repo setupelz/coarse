@@ -295,6 +295,7 @@ def run_headless_review(
     pre_extracted: Path | None = None,
     language: str | None = None,
     deep_literature_search: bool = False,
+    run_qa: bool | None = None,
 ):
     """Run the full coarse pipeline with a headless CLI backend.
 
@@ -307,6 +308,11 @@ def run_headless_review(
     Keeping the core logic here means the sidecar-file dance between
     cli_review and headless_review is no longer needed — the caller
     gets the full PaperText object directly.
+
+    ``run_qa`` threads through to ``review_paper``: ``None`` (default)
+    uses ``config.extraction_qa``; ``False`` explicitly disables the
+    post-extraction vision-LLM quality check (mirrors the main CLI's
+    ``--no-qa`` flag).
     """
     _patch_llmclient(host, model, effort)
 
@@ -325,6 +331,7 @@ def run_headless_review(
         "model": f"headless-{host}",
         "skip_cost_gate": True,
         "language": language,
+        "run_qa": run_qa,
     }
     if deep_literature_search:
         review_kwargs["deep_literature_search"] = True

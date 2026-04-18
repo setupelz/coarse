@@ -505,8 +505,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("coarse-output"),
-        help="Where to write the final review markdown (default: ./coarse-output/)",
+        default=None,
+        help="Where to write the final review markdown. Mozart fork "
+        "default: parent directory of the source paper (so the review "
+        "lives next to the paper). For handoff mode and explicit "
+        "overrides, falls back to ./coarse-output/.",
     )
     parser.add_argument(
         "--pre-extracted",
@@ -699,6 +702,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"ERROR: paper not found: {paper_path}", file=sys.stderr)
                 return 2
 
+        # Mozart fork: when --output-dir is unset, default to the paper's
+        # parent directory for local files (review lives next to the paper).
+        # For handoff mode (paper downloaded to a temp dir), fall back to
+        # ./coarse-output/ to avoid writing into /tmp.
+        if args.output_dir is None:
+            if handoff_bundle is None:
+                args.output_dir = paper_path.parent
+            else:
+                args.output_dir = Path("coarse-output")
         out_dir = args.output_dir.expanduser().resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
 

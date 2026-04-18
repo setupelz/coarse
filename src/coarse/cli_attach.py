@@ -64,13 +64,14 @@ watcher may race the launcher if an agent chains ``--detach`` +
 _ATTACH_READ_CHUNK = 8192
 """Bytes to read per log-tail iteration."""
 
-ATTACH_DEFAULT_TIMEOUT_SECONDS = 1800
-"""Default ``--attach-timeout`` upper bound. Matches the upper end of a
-realistic coarse review runtime (10-25 min) with a small safety
-margin. Longer than this almost certainly means the review crashed
-silently and the watcher should bail so the agent can report the
-timeout instead of hanging its own tool-call. Public because
-``cli_review``'s argparse uses it as the flag default."""
+ATTACH_DEFAULT_TIMEOUT_SECONDS = 3600
+"""Default ``--attach-timeout`` upper bound. Mozart fork: bumped from
+1800s (upstream default) to 3600s. 30 minutes turned out to be too
+tight for ``--effort high`` runs on longer papers — the watcher would
+exit 124 even though the worker was still happily processing. 60 min
+leaves comfortable margin above the 10-25 min typical runtime without
+changing exit semantics. Public because ``cli_review``'s argparse uses
+it as the flag default."""
 
 # Sentinels the watcher scans the log for to decide its exit code.
 _ATTACH_SUCCESS_MARKERS = ("REVIEW COMPLETE", "PUBLISHED TO COARSE WEB")

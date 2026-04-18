@@ -572,7 +572,19 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip post-extraction vision-LLM quality check. Useful when "
         "running without a GEMINI_API_KEY — mirrors the main `coarse` CLI flag.",
     )
+    parser.add_argument(
+        "--ocr-backend",
+        choices=["auto", "docling", "mistral", "pymupdf"],
+        default="auto",
+        help="PDF extraction backend priority. 'auto' (default) uses "
+        "Mistral OCR first with Docling fallback. 'docling' puts local "
+        "Docling first — no OpenRouter key needed. 'mistral' and "
+        "'pymupdf' similarly hoist that backend to the front.",
+    )
     args = parser.parse_args(argv)
+
+    if args.ocr_backend != "auto":
+        os.environ["COARSE_OCR_BACKEND"] = args.ocr_backend
 
     # --attach is a watch-only mode that does NOT run the pipeline.
     # It must be mutually exclusive with anything that starts a review.

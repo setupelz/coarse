@@ -239,6 +239,7 @@ def review_paper(
     skip_cost_gate: bool = False,
     config: CoarseConfig | None = None,
     author_notes: str | None = None,
+    run_qa: bool | None = None,
 ) -> tuple[Review, str, PaperText]:
     """Full pipeline orchestrator.
 
@@ -287,8 +288,11 @@ def review_paper(
     is_pdf = Path(pdf_path).suffix.lower() == ".pdf"
 
     if is_pdf:
-        # Auto-trigger extraction QA if garble detected or explicitly enabled
-        run_qa = config.extraction_qa
+        # Auto-trigger extraction QA if garble detected or explicitly enabled.
+        # Mozart fork: caller-supplied run_qa (--no-qa flag) takes precedence
+        # over config.extraction_qa.
+        if run_qa is None:
+            run_qa = config.extraction_qa
         if not run_qa and paper_text.garble_ratio > 0.001:
             logger.info(
                 "High garble ratio (%.4f) detected — auto-enabling extraction QA",

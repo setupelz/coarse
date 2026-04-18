@@ -240,6 +240,7 @@ def run_headless_review(
     pre_extracted: Path | None = None,
     language: str | None = None,
     run_qa: bool | None = None,
+    author_notes: str | None = None,
 ):
     """Run the full coarse pipeline with a headless CLI backend.
 
@@ -277,6 +278,7 @@ def run_headless_review(
         skip_cost_gate=True,
         language=language,
         run_qa=run_qa,
+        author_notes=author_notes,
     )
 
 

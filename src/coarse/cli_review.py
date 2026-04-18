@@ -581,10 +581,30 @@ def main(argv: list[str] | None = None) -> int:
         "Docling first — no OpenRouter key needed. 'mistral' and "
         "'pymupdf' similarly hoist that backend to the front.",
     )
+    parser.add_argument(
+        "--notes",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Path to a plain-text file containing reviewer notes or a "
+        "domain-specific rubric. Contents are wrapped in an "
+        "<author_notes> fence and forwarded to every user-visible review "
+        "pass (overview, section, editorial, etc.) as steering input — "
+        "NOT as instructions that override the review rubric. Trimmed to "
+        "2000 chars by prompts.py.",
+    )
     args = parser.parse_args(argv)
 
     if args.ocr_backend != "auto":
         os.environ["COARSE_OCR_BACKEND"] = args.ocr_backend
+
+    notes_text: str | None = None
+    if args.notes is not None:
+        notes_path = args.notes.expanduser()
+        if not notes_path.exists():
+            print(f"ERROR: notes file not found: {notes_path}", file=sys.stderr)
+            return 2
+        notes_text = notes_path.read_text(encoding="utf-8").strip() or None
 
     # --attach is a watch-only mode that does NOT run the pipeline.
     # It must be mutually exclusive with anything that starts a review.
@@ -753,6 +773,7 @@ def main(argv: list[str] | None = None) -> int:
                 pre_extracted=pre_extracted_path,
                 language=args.language,
                 run_qa=False if args.no_qa else None,
+                author_notes=notes_text,
             )
         except Exception as exc:
             # Scrub the exception string before printing — if any upstream

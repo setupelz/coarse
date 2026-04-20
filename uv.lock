@@ -293,6 +293,7 @@ name = "coarse-ink"
 version = "1.8.0"
 source = { editable = "." }
 dependencies = [
+    { name = "docling" },
     { name = "instructor" },
     { name = "litellm" },
     { name = "pydantic" },
@@ -301,6 +302,7 @@ dependencies = [
     { name = "requests" },
     { name = "rich" },
     { name = "tomli-w" },
+    { name = "transformers" },
     { name = "typer" },
 ]
 
@@ -330,6 +332,7 @@ formats = [
 requires-dist = [
     { name = "coarse-ink", extras = ["docling"], marker = "extra == 'all'" },
     { name = "coarse-ink", extras = ["formats"], marker = "extra == 'all'" },
+    { name = "docling", specifier = ">=2.86.0" },
     { name = "docling", marker = "extra == 'docling'", specifier = ">=2.86.0" },
     { name = "ebooklib", marker = "extra == 'formats'", specifier = ">=0.18" },
     { name = "instructor", specifier = ">=1.15.1" },
@@ -344,6 +347,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
     { name = "tomli-w", specifier = ">=1.0" },
+    { name = "transformers", specifier = ">=5.4,<6" },
     { name = "transformers", marker = "extra == 'docling'", specifier = ">=5.4,<6" },
     { name = "typer", specifier = ">=0.12" },
 ]

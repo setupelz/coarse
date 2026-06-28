@@ -149,12 +149,18 @@ def openrouter_key_preflight_error(
     source format; unlike the standard search, silently dropping to arXiv would
     violate the user's explicit depth choice. Reads ``os.environ`` — callers
     must load config/.env first so this check is authoritative.
+
+    Mozart fork: a local-first OCR backend (``COARSE_OCR_BACKEND=docling`` or
+    ``pymupdf``) needs no OpenRouter key for PDF OCR, so subscription-only runs
+    are not blocked by the #197 preflight. Deep literature search still needs it.
     """
     if _looks_like_openrouter_key(os.environ.get("OPENROUTER_API_KEY")):
         return None
     if deep_literature_search:
         return _DEEP_LITERATURE_KEY_HELP
     if pre_extracted is not None or paper_path.suffix.lower() != ".pdf":
+        return None
+    if os.environ.get("COARSE_OCR_BACKEND", "auto").lower() in ("docling", "pymupdf"):
         return None
     return _OPENROUTER_KEY_HELP
 
@@ -398,8 +404,11 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = args.output_dir.expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Mozart fork: a local-first OCR backend (docling/pymupdf) needs no
+    # OpenRouter key for PDF OCR, so don't hard-require one for keyless runs.
+    _local_backend = os.environ.get("COARSE_OCR_BACKEND", "auto").lower() in ("docling", "pymupdf")
     needs_openrouter_key = (
-        pre_extracted is None and paper_path.suffix.lower() == ".pdf"
+        pre_extracted is None and paper_path.suffix.lower() == ".pdf" and not _local_backend
     ) or args.deep_literature_search
     if needs_openrouter_key:
         _require_openrouter_key()

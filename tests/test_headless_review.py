@@ -155,3 +155,50 @@ def test_find_openrouter_key_skips_junk_env_and_uses_valid_config(tmp_path, monk
     monkeypatch.setenv("OPENROUTER_API_KEY", "FROM_ENV")  # junk, must be ignored
     monkeypatch.chdir(tmp_path)
     assert _find_openrouter_key() == "sk-or-v1-real"
+
+
+def test_preflight_pdf_no_key_auto_backend_blocks(tmp_path, monkeypatch) -> None:
+    """#197 preserved: a PDF with no usable key and the default cascade still
+    fails fast — Mistral OCR on OpenRouter would 401 deep in extraction."""
+    from coarse.headless_review import openrouter_key_preflight_error
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("COARSE_OCR_BACKEND", raising=False)
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n")
+    assert openrouter_key_preflight_error(pdf, None) is not None
+
+
+def test_preflight_pdf_no_key_docling_backend_allows(tmp_path, monkeypatch) -> None:
+    """Mozart fork: COARSE_OCR_BACKEND=docling runs local extraction first, so a
+    keyless subscription PDF review must NOT be blocked by the preflight."""
+    from coarse.headless_review import openrouter_key_preflight_error
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setenv("COARSE_OCR_BACKEND", "docling")
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n")
+    assert openrouter_key_preflight_error(pdf, None) is None
+
+
+def test_preflight_pdf_no_key_pymupdf_backend_allows(tmp_path, monkeypatch) -> None:
+    """Mozart fork: the other local backend (pymupdf) is equally keyless."""
+    from coarse.headless_review import openrouter_key_preflight_error
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.setenv("COARSE_OCR_BACKEND", "pymupdf")
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n")
+    assert openrouter_key_preflight_error(pdf, None) is None
+
+
+def test_preflight_non_pdf_no_key_allows(tmp_path, monkeypatch) -> None:
+    """#186: non-PDF sources skip OCR entirely and never need a key, regardless
+    of backend selection."""
+    from coarse.headless_review import openrouter_key_preflight_error
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("COARSE_OCR_BACKEND", raising=False)
+    docx = tmp_path / "paper.docx"
+    docx.write_bytes(b"PK\x03\x04")
+    assert openrouter_key_preflight_error(docx, None) is None

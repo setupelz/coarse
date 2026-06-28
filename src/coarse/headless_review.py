@@ -136,8 +136,16 @@ def openrouter_key_preflight_error(paper_path: Path, pre_extracted: Path | None)
     callers must run ``_ensure_openrouter_key_loaded`` first so any valid
     env/config/.env key has been promoted, making this check authoritative for
     what extraction will resolve.
+
+    Mozart fork: a local-first OCR backend (``COARSE_OCR_BACKEND=docling`` or
+    ``pymupdf``) runs before the OpenRouter backends in the cascade, so a PDF
+    review can complete with no key at all. When such a backend is selected,
+    the key is not required even for a PDF — return None so subscription-only
+    runs are not blocked by the #197 preflight.
     """
     if pre_extracted is not None or paper_path.suffix.lower() != ".pdf":
+        return None
+    if os.environ.get("COARSE_OCR_BACKEND", "auto").lower() in ("docling", "pymupdf"):
         return None
     if _looks_like_openrouter_key(os.environ.get("OPENROUTER_API_KEY")):
         return None
@@ -335,7 +343,10 @@ def main(argv: list[str] | None = None) -> int:
     out_dir = args.output_dir.expanduser()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    if pre_extracted is None:
+    # Mozart fork: a local-first OCR backend (docling/pymupdf) needs no
+    # OpenRouter key, so don't hard-require one for keyless subscription runs.
+    _local_backend = os.environ.get("COARSE_OCR_BACKEND", "auto").lower() in ("docling", "pymupdf")
+    if pre_extracted is None and not _local_backend:
         _require_openrouter_key()
 
     logging.basicConfig(

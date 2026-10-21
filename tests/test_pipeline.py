@@ -215,7 +215,8 @@ def test_review_paper_calls_stages_in_order():
 def test_review_paper_preserves_progress_callback_positional_slot():
     """Appending deep search must not reinterpret existing positional callers."""
     parameters = list(inspect.signature(review_paper).parameters)
-    assert parameters[-2:] == ["progress_callback", "deep_literature_search"]
+    # Mozart fork appends run_qa after upstream's slots, never before them.
+    assert parameters[-3:] == ["progress_callback", "deep_literature_search", "run_qa"]
 
 
 def test_review_paper_deep_literature_failure_is_not_silently_skipped():

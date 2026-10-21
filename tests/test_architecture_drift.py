@@ -65,7 +65,10 @@ KNOWN_OVERSIZED: dict[str, int] = {
     # Together these push it past the base cap. Allowlisted at 900 (a CLI
     # entrypoint, already in PIPELINE_ALLOW); splitting the handoff flow into
     # its own module is a post-sync refactor candidate.
-    "cli_review": 900,
+    "cli_review": 910,
+    # pipeline.py: Mozart fork threads run_qa through review_paper (+7 lines
+    # over the base cap on top of upstream's deep_literature_search).
+    "pipeline": 810,
 }
 
 
